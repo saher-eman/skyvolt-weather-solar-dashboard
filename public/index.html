@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkyVolt — Weather + Solar Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- This is the hero banner - its background is changed by JS based on the weather -->
+  <header id="sky-hero" class="sky-clouds">
+    <div class="drift drift-1"></div>
+    <div class="drift drift-2"></div>
+    <div class="drift drift-3"></div>
+
+    <div class="hero-content">
+      <p class="eyebrow">SKYVOLT</p>
+      <h1 class="brand">Know the sky. Power your day.</h1>
+
+      <form id="search-form" class="search-form">
+        <input
+          type="text"
+          id="city-input"
+          placeholder="Search a city — Karachi, Lahore, Tokyo..."
+          autocomplete="off"
+          aria-label="Search for a city's weather"
+          required
+        >
+        <button type="submit">Sky Overview</button>
+      </form>
+
+      <div id="status-msg" class="status-msg"></div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- CURRENT WEATHER -->
+    <section id="current-card" class="panel current-panel hidden">
+      <div class="current-top">
+        <div>
+          <p class="city-name" id="cw-city">—</p>
+          <p class="city-desc" id="cw-desc">—</p>
+        </div>
+        <div class="current-temp-block">
+          <span class="weather-icon current-weather-icon" id="cw-icon"></span>
+          <p class="temp-readout" id="cw-temp">--°</p>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat">
+          <span class="stat-label">FEELS LIKE</span>
+          <span class="stat-value" id="cw-feels">--</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">HUMIDITY</span>
+          <span class="stat-value" id="cw-humidity">--</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">WIND</span>
+          <span class="stat-value" id="cw-wind">--</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">PRESSURE</span>
+          <span class="stat-value" id="cw-pressure">--</span>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat">
+          <span class="stat-label" tabindex="0" title="UV Index measures the strength of sunburn-causing UV radiation.">UV INDEX ℹ️</span>
+          <span class="stat-value" id="cw-uv">--</span>
+          <span class="uv-badge" id="cw-uv-badge">--</span>
+          <span class="advice-text" id="cw-uv-advice"></span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">VISIBILITY</span>
+          <span class="stat-value" id="cw-visibility">--</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label" tabindex="0" title="Dew point is the temperature at which air becomes saturated with moisture — higher dew points feel more humid/sticky.">DEW POINT ℹ️</span>
+          <span class="stat-value" id="cw-dewpoint">--</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">RAIN CHANCE</span>
+          <span class="stat-value" id="cw-rain-chance">--</span>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat">
+          <span class="stat-label">🌅 SUNRISE</span>
+          <span class="stat-value" id="cw-sunrise">--</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">🌇 SUNSET</span>
+          <span class="stat-value" id="cw-sunset">--</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label" id="cw-moon-label">MOON PHASE</span>
+          <span class="stat-value" id="cw-moon">--</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label" tabindex="0" title="US AQI - a standardized 0-500 scale measuring outdoor air pollution from PM2.5, PM10, and other pollutants.">AIR QUALITY (AQI) ℹ️</span>
+          <span class="stat-value" id="cw-aqi">--</span>
+          <span class="aqi-badge" id="cw-aqi-badge">--</span>
+          <span class="advice-text" id="cw-aqi-advice"></span>
+        </div>
+      </div>
+
+      <p class="last-updated" id="cw-last-updated"></p>
+
+      <button id="fav-btn" class="ghost-btn" aria-label="Save this city to favorites">+ Save to favorites</button>
+    </section>
+
+    <!-- ERROR STATE (shown when weather data can't be loaded) -->
+    <section id="error-card" class="panel error-card hidden" role="alert" aria-live="assertive">
+      <p class="error-icon">⚠️</p>
+      <p class="error-title">Unable to fetch weather data.</p>
+      <p class="error-desc">Please check your internet connection or try again later.</p>
+      <button id="retry-btn" class="retry-btn">Retry</button>
+    </section>
+
+    <!-- HOURLY FORECAST -->
+    <section id="hourly-section" class="panel hidden">
+      <h2 class="panel-title">Next hours</h2>
+      <div id="hourly-strip" class="hourly-strip"></div>
+    </section>
+
+    <!-- 5-DAY FORECAST -->
+    <section class="panel">
+      <h2 class="panel-title">Next 5 days</h2>
+      <div id="forecast-strip" class="forecast-strip">
+        <p class="empty-note">Search a city above to see the forecast.</p>
+      </div>
+      <p id="severe-weather-banner" class="severe-weather-banner hidden"></p>
+    </section>
+
+    <!-- SOLAR ESTIMATOR (Phase 2 - unique feature) -->
+    <section class="panel solar-panel">
+      <h2 class="panel-title">☀️ Solar Estimator</h2>
+      <p class="solar-sub" id="solar-sub-message">Search a city above first, then enter your panel count and wattage to estimate today's solar output.</p>
+
+      <form id="solar-form" class="solar-form">
+        <div class="solar-field">
+          <label for="panel-count">Number of panels</label>
+          <input type="number" id="panel-count" min="1" max="50" placeholder="e.g. 10" required>
+        </div>
+
+        <div class="solar-field">
+          <label for="rate-input">Electricity rate (Rs/unit)</label>
+          <input type="number" id="rate-input" min="1" step="0.01" placeholder="65" value="65">
+        </div>
+
+        <div class="wattage-mode-toggle">
+          <label class="radio-option">
+            <input type="radio" name="wattage-mode" value="same" checked>
+            All panels same wattage
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="wattage-mode" value="different">
+            Panels have different wattage
+          </label>
+        </div>
+
+        <div id="same-wattage-field" class="solar-field">
+          <label for="same-wattage-input">Wattage per panel (W)</label>
+          <input type="number" id="same-wattage-input" min="1" placeholder="e.g. 300">
+        </div>
+
+        <div id="wattage-fields" class="wattage-fields hidden"></div>
+
+        <button type="submit">Calculate solar output</button>
+      </form>
+
+      <div id="solar-results" class="solar-results hidden">
+        <div class="solar-output-box">
+          <span class="stat-label" id="solar-condition-label">ESTIMATED OUTPUT TODAY</span>
+          <span class="solar-output-value" id="solar-output">-- kWh</span>
+          <span class="solar-output-sub" id="solar-output-sub">--</span>
+          <span class="solar-confidence" id="solar-confidence" tabindex="0" title="Confidence reflects how predictable today's sky conditions are for solar generation.">--</span>
+          <span class="confidence-explanation" id="solar-confidence-explanation"></span>
+        </div>
+
+        <div class="solar-output-box savings-box">
+          <span class="stat-label">ESTIMATED SAVINGS TODAY</span>
+          <span class="solar-output-value" id="solar-savings">Rs --</span>
+          <span class="solar-output-sub" id="solar-savings-sub">--</span>
+        </div>
+
+        <div class="stat-row solar-stat-row">
+          <div class="stat">
+            <span class="stat-label">DAYLIGHT HOURS (info only)</span>
+            <span class="stat-value" id="solar-daylight">--</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label" tabindex="0" title="Peak Sun Hours = total sunlight energy received today, expressed in hours of standard-intensity sunlight. This is what the solar output calculation is based on.">PEAK SUN HOURS (calculation) ℹ️</span>
+            <span class="stat-value" id="solar-peaksun">--</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">PEAK SUNLIGHT WINDOW</span>
+            <span class="stat-value" id="solar-peak">--</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">LAUNDRY DRYING SPEED</span>
+            <span class="stat-value" id="solar-drying">--</span>
+          </div>
+        </div>
+
+        <div class="solar-ac-tip">
+          <span class="stat-label">AC SUPPORT ESTIMATE</span>
+          <p id="solar-ac">--</p>
+        </div>
+
+        <div class="solar-tips">
+          <span class="stat-label">ENERGY SAVING TIPS</span>
+          <ul id="solar-tips-list"></ul>
+        </div>
+      </div>
+    </section>
+
+
+    <div class="two-col">
+      <!-- COMPARE CITIES -->
+      <section class="panel">
+        <h2 class="panel-title">Compare cities</h2>
+        <form id="compare-form" class="compare-form">
+          <input
+            type="text"
+            id="compare-input"
+            placeholder="Karachi, Lahore, Islamabad"
+            autocomplete="off"
+            aria-label="Enter city names to compare, separated by commas"
+            required
+          >
+          <button type="submit">Compare</button>
+        </form>
+        <div id="compare-results" class="compare-results compare-table-wrap"></div>
+        <p class="compare-note" id="compare-note"></p>
+      </section>
+
+      <!-- FAVORITES -->
+      <section class="panel">
+        <h2 class="panel-title">Favorite cities</h2>
+        <div id="favorites-list" class="favorites-list">
+          <p class="empty-note">No favorites saved yet.</p>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    Built with Node.js, Express &amp; the Open-Meteo API.
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
