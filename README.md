@@ -4,6 +4,10 @@
 
 SkyVolt is a modern **Weather & Solar Intelligence Dashboard** that combines real-time weather information with solar energy estimation. It helps users understand current weather conditions, estimate daily solar power generation, calculate electricity savings, and make smarter energy decisions.
 
+## 🔗 Live Demo
+
+👉 [https://skyvolt-weather-solar-dashboard.vercel.app](https://skyvolt-weather-solar-dashboard.vercel.app)
+
 ---
 
 ## ✨ Features
@@ -103,8 +107,9 @@ Add screenshots of:
 
 **Saher Eman**
 
-GitHub:
-https://github.com/saher-eman
+GitHub: [https://github.com/saher-eman](https://github.com/saher-eman)
+
+LinkedIn: [https://www.linkedin.com/in/saher-eman-14b5a93a7/](https://www.linkedin.com/in/saher-eman-14b5a93a7/)
 
 ---
 
