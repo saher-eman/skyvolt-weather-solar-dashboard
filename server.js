@@ -275,10 +275,15 @@ app.get('/weather', async (req, res) => {
 
     const moonPhase = getMoonPhase(new Date());
 
-    // Save to search history
-    const history = readJSONFile(HISTORY_FILE);
-    history.unshift({ city: place.name, time: new Date().toLocaleString() }); // newest search goes on top
-    writeJSONFile(HISTORY_FILE, history.slice(0, 5)); // keep only the last 5
+    // Save to search history — wrapped in try/catch since Vercel's filesystem is read-only,
+    // history won't persist there, but it shouldn't crash the whole request either
+    try {
+      const history = readJSONFile(HISTORY_FILE);
+      history.unshift({ city: place.name, time: new Date().toLocaleString() }); // newest search goes on top
+      writeJSONFile(HISTORY_FILE, history.slice(0, 5)); // keep only the last 5
+    } catch (historyError) {
+      // Ignore — file system may be read-only (e.g. on Vercel)
+    }
 
     res.json({
       city: place.name,
@@ -881,7 +886,14 @@ app.post('/favorites', (req, res) => {
   }
 
   favorites.push(city);
-  writeJSONFile(FAVORITES_FILE, favorites);
+
+  // Wrapped in try/catch since Vercel's filesystem is read-only — favorites won't persist
+  // there, but the request should still succeed with a friendly response instead of crashing.
+  try {
+    writeJSONFile(FAVORITES_FILE, favorites);
+  } catch (writeError) {
+    // Ignore — file system may be read-only (e.g. on Vercel)
+  }
 
   res.json({ message: `${city} added to favorites!`, favorite_cities: favorites });
 });
